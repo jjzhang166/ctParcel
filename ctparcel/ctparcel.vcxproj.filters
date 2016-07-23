@@ -18,6 +18,9 @@
     <ClInclude Include="ctWin32Dialog.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ctWizard.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ctparcel.cpp">

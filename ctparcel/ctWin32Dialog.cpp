@@ -60,23 +60,17 @@ namespace ctWin32Dialog
 					return callback( hWnd, LOWORD( wParam ) );
 				}
 
-			case WM_CTLCOLOREDIT:	//bg-edit
-				{
-					RECT rt;
-					COLORREF tmpbg = bgColor;
-					GetClientRect( (HWND)lParam, &rt );
-					if(PtInRect( &forecolorRect, {rt.right / 2,rt.bottom / 2} ))
-						tmpbg = foreColor;
-					return (LONG)CreateSolidBrush( tmpbg );
-				}
-
-
 			case WM_CTLCOLORSTATIC: //bg-static
 				{
+					char tmp[200];
+					GetWindowTextA( (HWND)lParam, tmp, 200 );
+
 					RECT rt;
 					COLORREF tmpbg = bgColor;
-					GetClientRect( (HWND)lParam, &rt );
-					if(PtInRect( &forecolorRect, {rt.right / 2,rt.bottom / 2} ))
+					GetWindowRect( (HWND)lParam, &rt );
+					POINT pt = {rt.left,rt.top};
+					ScreenToClient( hWnd, &pt );
+					if(PtInRect( &forecolorRect, {pt.x,pt.y} ))
 						tmpbg = foreColor;
 					SetTextColor( (HDC)wParam, fontColor );
 					SetBkColor( (HDC)wParam, tmpbg );
@@ -211,7 +205,7 @@ namespace ctWin32Dialog
 	// proc == callback : function<int CALLBACK( DWORD )>
 	// ext : bCaptionFont == true ? fontsize=16 : fontsize=system-default
 	bool ctDialog::createPart( string className, string windowName, DWORD partType,
-		int x, int y, int width, int height, string partName, CommandCallback proc, bool bCaptionFont )
+		int x, int y, int width, int height, string partName, CommandCallback proc, int bCaptionFontsize )
 	{
 		// 获取一个id
 		auto getwindowid = [&]()->int {
@@ -230,9 +224,9 @@ namespace ctWin32Dialog
 			x, y, width, height, hMainDlg, (HMENU)windowId, appInstance, nullptr );
 		//字体
 		HFONT font = (HFONT)GetStockObject( DEFAULT_GUI_FONT );
-		if(bCaptionFont)
+		if(bCaptionFontsize)
 		{
-			font = CreateFont( 16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
+			font = CreateFont( bCaptionFontsize, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
 				OUT_TT_PRECIS, CLIP_TT_ALWAYS, PROOF_QUALITY, VARIABLE_PITCH | FF_SWISS, TEXT( "宋体" ) );
 		}
 		SendMessage( hWnd, WM_SETFONT, (WPARAM)font, TRUE );
@@ -299,18 +293,34 @@ namespace ctWin32Dialog
 	// (当然也可以使用默认的partname == "static","button"...)
 	//
 	// text
-	 bool ctDialog::createText( string content, int x, int y, int width, int height,
-		bool isCaption, string partName )
+	bool ctDialog::createText( string content, int x, int y, int width, int height,
+		int isCaptionSize, string partName )
 	{
-		return createPart( "STATIC", content, NULL, x, y, width, height, partName, nullptr, isCaption );
+		return createPart( "STATIC", content, NULL, x, y, width, height, partName, nullptr, isCaptionSize );
 	}
 	// push-button
-	 bool ctDialog::createbutton( string content, int x, int y, int width, int height,
-		CommandCallback proc, string partName )
+	bool ctDialog::createbutton( string content, int x, int y, 
+		CommandCallback proc,int width, int height, string partName )
 	{
 		return createPart( "button", content, BS_PUSHBUTTON, x, y, width, height, partName, proc );
 	}
-
+	// edit
+	// @partType = WS_BORDER
+	bool ctDialog::createEdit( int x, int y, int width, int height, 
+		string partName, string defaultContent, DWORD partType )
+	{
+		return createPart( "EDIT", defaultContent, partType, x, y, width, height, partName );
+	}
+	bool ctDialog::setEditText(string partName,string editContent)
+	{
+		HWND hedit = getWnd( partName );
+		if(hedit)
+		{
+			SetWindowTextA( hedit, editContent.c_str() );
+			return true;
+		}
+		return false;
+	}
 	//
 	// 画控件 (注意:这样的控件不会保存进allcreated)
 	//
@@ -329,7 +339,7 @@ namespace ctWin32Dialog
 			}
 		}
 	}
-	 void ctDialog::eraseDrewAll()
+	void ctDialog::eraseDrewAll()
 	{
 		lineInfos.clear();
 		bmpInfos.clear();
@@ -337,11 +347,12 @@ namespace ctWin32Dialog
 	}
 	// draw line (保存记录后从wm_paint里画的)
 	// line =>  sx,sy -> ex,ey
-	 void ctDialog::drawLine( int sx, int sy, int ex, int ey, COLORREF col, string partName )
+	void ctDialog::drawLine( int sx, int sy, int ex, int ey, COLORREF col, string partName )
 	{
 		lineInfos.push_back( {partName, col,{sx,sy},{ex,ey}} );
+		InvalidateRect( hMainDlg, NULL, FALSE );
 	}
-	 void ctDialog::eraseLine( string partName )
+	void ctDialog::eraseLine( string partName )
 	{
 		eraseDrewPart<list<LineInfo>>( lineInfos, partName );
 	}
@@ -350,28 +361,29 @@ namespace ctWin32Dialog
 	void ctDialog::drawBmp( string filename, int cx, int cy, int width, int height, string partName )
 	{
 		bmpInfos.push_back( {partName, filename,cx,cy,width,height} );
+		InvalidateRect( hMainDlg, NULL, FALSE );
 	}
-	 void ctDialog::eraseBmp( string partName )
+	void ctDialog::eraseBmp( string partName )
 	{
 		eraseDrewPart<list<BmpInfo>>( bmpInfos, partName );
 	}
 
 	// 主对话框样式
-	 void ctDialog::setTitle( string title )
+	void ctDialog::setTitle( string title )
 	{
 		SetWindowTextA( hMainDlg, title.c_str() );
 	}
-	 void ctDialog::setbgcolor( COLORREF col )
+	void ctDialog::setbgcolor( COLORREF col )
 	{
 		bgColor = col;
 		InvalidateRect( hMainDlg, NULL, FALSE );
 	}
-	 void ctDialog::setFontColor( COLORREF col )
+	void ctDialog::setFontColor( COLORREF col )
 	{
 		fontColor = col;
 		InvalidateRect( hMainDlg, NULL, FALSE );
 	}
-	 void ctDialog::setForecolor( COLORREF col, RECT foreRt )
+	void ctDialog::setForecolor( COLORREF col, RECT foreRt )
 	{
 		foreColor = col;
 		forecolorRect = foreRt;

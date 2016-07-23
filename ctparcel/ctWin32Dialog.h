@@ -70,7 +70,7 @@ namespace ctWin32Dialog
 		// proc == callback : function<int CALLBACK( DWORD )>
 		// ext : bCaptionFont == true ? fontsize=16 : fontsize=system-default
 		bool createPart( string className, string windowName, DWORD partType,
-			int x, int y, int width, int height, string partName, CommandCallback proc = nullptr, bool bCaptionFont = false );
+			int x, int y, int width, int height, string partName, CommandCallback proc = nullptr, int bCaptionFontsize = 0 );
 		// partName == "*" 时为删除所有
 		bool deletePart( string partName );
 		void deleteAllPart();
@@ -88,11 +88,14 @@ namespace ctWin32Dialog
 		//
 		// text
 		bool createText( string content, int x, int y, int width, int height,
-			bool isCaption = false, string partName = "static" );
+			int isCaptionSize = 0, string partName = "static" );
 		// push-button
-		bool createbutton( string content, int x, int y, int width, int height,
-			CommandCallback proc = nullptr, string partName = "button" );
-
+		bool createbutton( string content, int x, int y, CommandCallback proc = nullptr, 
+			int width = 85, int height = 22, string partName = "button" );
+		// edit
+		bool createEdit( int x, int y, int width, int height = 20, 
+			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER );
+		bool setEditText( string partName, string editContent );
 		//
 		// 画控件 (注意:这样的控件不会保存进allcreated)
 		//

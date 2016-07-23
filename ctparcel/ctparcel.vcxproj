@@ -143,6 +143,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ctWin32Dialog.h" />
+    <ClInclude Include="ctWizard.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ctparcel.cpp" />
