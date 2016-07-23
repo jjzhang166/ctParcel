@@ -101,6 +101,7 @@ namespace ctWin32Dialog
 			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER );
 		bool setEditText( string partName, string editContent );
 		string getEditText( string partName );
+
 		//
 		// 画控件 (注意:这样的控件不会保存进allcreated)
 		//

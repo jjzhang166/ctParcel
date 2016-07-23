@@ -89,10 +89,25 @@ namespace ctWin32Wizard
 			return 0;
 		}
 
+		//
 		// ¹¦ÄÜ
+		//
+		void setupInfo()
+		{
+			for(int i=0; i < 10000; i++)
+			{
+				char tmp[20];
+				wsprintfA( tmp, "%d", i );
+				ctd.setEditText( "lastshow", tmp );
+				Sleep( 500 );
+			}
+		}
 		int CALLBACK setup( HWND hDlg, DWORD windowId )
 		{
-			MessageBoxA( 0, setuppath.c_str(), 0, 0 );
+			std::thread t1( &ctWizard::setupInfo,this );
+			t1.detach();
+
+			//MessageBoxA( 0, setuppath.c_str(), 0, 0 );
 			return 0;
 		}
 		int CALLBACK choosefile( HWND hDlg, DWORD windowId )
@@ -109,6 +124,8 @@ namespace ctWin32Wizard
 			}
 			return 0;
 		}
+
+
 
 	private:
 		unsigned int step;

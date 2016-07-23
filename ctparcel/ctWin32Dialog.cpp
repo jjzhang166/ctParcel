@@ -283,7 +283,7 @@ namespace ctWin32Dialog
 		}
 		return ret;
 	}
-	 void ctDialog::deleteAllPart()
+	void ctDialog::deleteAllPart()
 	{
 		deletePart( "*" );
 	}
