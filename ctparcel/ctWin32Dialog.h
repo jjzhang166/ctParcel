@@ -6,6 +6,7 @@
 #include <map>
 #include <functional>
 #include <thread>
+#include <Shlobj.h>
 
 namespace ctWin32Dialog
 {
@@ -64,6 +65,9 @@ namespace ctWin32Dialog
 		// 阻塞函数 直到对话框被关闭
 		void showMainDialog();
 
+		// chooseFolders -> 选择文件夹界面 -> 选定后直接放入partNameEdit中 
+		bool chooseFolders( string partNameEdit );
+
 		// 增加删除控件
 		// CreateWindow@param : className , windowName, x ,y ,width, height (partType = partType | WS_VISIBLE | WS_CHILD )
 		// partName@param provide for deletePart()
@@ -96,6 +100,7 @@ namespace ctWin32Dialog
 		bool createEdit( int x, int y, int width, int height = 20, 
 			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER );
 		bool setEditText( string partName, string editContent );
+		string getEditText( string partName );
 		//
 		// 画控件 (注意:这样的控件不会保存进allcreated)
 		//

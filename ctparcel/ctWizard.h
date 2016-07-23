@@ -18,7 +18,7 @@ namespace ctWin32Wizard
 		void createMain(int w=510,int h=370)
 		{
 			ctd.createMainDialog( w, h );
-			ctd.setTitle( "呼叫地面测试中心" );
+			ctd.setTitle( "地面测试中心" );
 			page1( 0, 0 );
 			ctd.showMainDialog();
 		}
@@ -55,7 +55,7 @@ namespace ctWin32Wizard
 			ctd.createText( "安装程序将把 %s 安装到以下文件夹.", 90, 85, 200, 15 );
 			ctd.createText( "若要继续,请点击\"下一步\". 如果你要换一个文件夹,请点击\"浏览\".", 40, 120, 400, 15 );
 			ctd.createEdit( 40, 145, 300,20 , "path","c:\\testPath");
-			ctd.createbutton( "浏览(R)...", 350, 144 );
+			ctd.createbutton( "浏览(R)...", 350, 144, PARTCALLBACK( choosefile ) );
 
 			ctd.createbutton( "< 上一步(B)", 200, 300, PARTCALLBACK( page1 ) );
 			ctd.createbutton( "下一步(N) >", 300, 300, PARTCALLBACK( page3 ) );
@@ -64,6 +64,9 @@ namespace ctWin32Wizard
 		}
 		int CALLBACK page3( HWND hDlg, DWORD windowId )
 		{
+			//先读取之前page2中的path
+			setuppath = ctd.getEditText( "path" );
+
 			step = 3;
 			ctd.clearDlg();
 
@@ -72,22 +75,31 @@ namespace ctWin32Wizard
 			ctd.drawLine( 0, 290, 510, 290, (COLORREF)0xA0A0A0 );
 			ctd.drawBmp( "e:\\WizardSmallImage.bmp", 435, 0, 55, 55 );
 
-			ctd.createText( "选择开始菜单文件夹", 20, 15, 200, 15, 12 );
-			ctd.createText( "程序的快捷方式要安装到哪里?", 40, 35, 200, 15 );
+			ctd.createText( "准备安装", 20, 15, 200, 15, 12 );
+			ctd.createText( "安装程序准备在你的电脑上安装.", 40, 35, 200, 15 );
 
-			ctd.drawBmp( "e:\\folders.bmp", 40, 75, 36, 36 );
-			ctd.createText( "安装程序将在以下开始菜单文件夹中创建程序的快捷方式.", 90, 85, 400, 15 );
-			ctd.createText( "若要继续,请点击\"下一步\". 如果你要换一个文件夹,请点击\"浏览\".", 40, 120, 400, 15 );
-			ctd.createEdit( 40, 145, 300, 20, "path", "Test" );
-			ctd.createbutton( "浏览(R)...", 350, 144 );
+			ctd.createText( "点击\"安装\"继续,如果你想修改设置请点击\"上一步\".", 40, 75, 400, 15 );
+			ctd.createEdit( 40, 100, 400, 170, "lastshow" );
+			PostMessageW( ctd.getWnd("lastshow"), EM_SETREADONLY, 1, 0 );		//设置为只读
+			ctd.setEditText( "lastshow", "目标位置:\r\n\tc:\\testSetup" );
 
 			ctd.createbutton( "< 上一步(B)", 200, 300, PARTCALLBACK( page2 ) );
-			ctd.createbutton( "安装(I)", 300, 300 );
+			ctd.createbutton( "安装(I)", 300, 300, PARTCALLBACK( setup ) );
 			ctd.createbutton( "取消", 400, 300, PARTCALLBACK( cancel ) );
 			return 0;
 		}
 
-		// 小模块
+		// 功能
+		int CALLBACK setup( HWND hDlg, DWORD windowId )
+		{
+			MessageBoxA( 0, setuppath.c_str(), 0, 0 );
+			return 0;
+		}
+		int CALLBACK choosefile( HWND hDlg, DWORD windowId )
+		{
+			ctd.chooseFolders( "path" );
+			return 0;
+		}
 		int CALLBACK cancel( HWND hDlg, DWORD windowId )
 		{
 			if(MessageBoxA( hDlg, "安装未完成!如果你现在退出,程序将无法完成!\n\n要退出安装吗?", 
@@ -100,6 +112,7 @@ namespace ctWin32Wizard
 
 	private:
 		unsigned int step;
+		std::string setuppath;
 		ctWin32Dialog::ctDialog ctd;
 	};
 }

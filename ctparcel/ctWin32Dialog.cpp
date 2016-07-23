@@ -171,7 +171,7 @@ namespace ctWin32Dialog
 		RegisterClassExW( &wcex );
 
 		// create main window
-		HWND hWnd = CreateWindow( szClass, TEXT( "ctDialog" ), WS_OVERLAPPEDWINDOW&~WS_MAXIMIZEBOX,
+		HWND hWnd = CreateWindow( szClass, TEXT( "ctDialog" ), WS_OVERLAPPEDWINDOW&~WS_MAXIMIZEBOX&~WS_THICKFRAME,
 			CW_USEDEFAULT, 0, xWidth, xHeight, nullptr, nullptr, appInstance, nullptr );
 
 		if(hWnd)
@@ -197,6 +197,25 @@ namespace ctWin32Dialog
 			TranslateMessage( &msg );
 			DispatchMessage( &msg );
 		}
+	}
+
+	// chooseFolders -> 选择文件夹界面 -> 选定后直接放入partNameEdit中 
+	bool ctDialog::chooseFolders( string partNameEdit )
+	{
+		BROWSEINFOA bi = {0};
+		LPITEMIDLIST pIDList;
+		bi.hwndOwner = hMainDlg;
+		bi.lpszTitle = "选择文件夹";
+		bi.ulFlags = BIF_RETURNONLYFSDIRS;
+		pIDList = SHBrowseForFolderA( &bi );
+		if(pIDList)
+		{
+			char tmp[260];
+			SHGetPathFromIDListA( pIDList, tmp );
+			setEditText( partNameEdit, tmp );
+			return true;
+		}
+		return FALSE;
 	}
 
 	// 增加删除控件
@@ -320,6 +339,17 @@ namespace ctWin32Dialog
 			return true;
 		}
 		return false;
+	}
+	string ctDialog::getEditText( string partName )
+	{
+		HWND hedit = getWnd( partName );
+		if(hedit)
+		{
+			char tmp[500];
+			GetWindowTextA( hedit, tmp, 500 );
+			return string(tmp);
+		}
+		return nullptr;
 	}
 	//
 	// 画控件 (注意:这样的控件不会保存进allcreated)
