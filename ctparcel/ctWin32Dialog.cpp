@@ -175,7 +175,9 @@ namespace ctWin32Dialog
 		// create main window
 		HWND hWnd = CreateWindow( szClass, TEXT( "ctDialog" ), WS_OVERLAPPEDWINDOW&~WS_MAXIMIZEBOX&~WS_THICKFRAME,
 			CW_USEDEFAULT, 0, xWidth, xHeight, nullptr, nullptr, appInstance, nullptr );
-
+		//设置窗体位置居中
+		MoveWindow( hWnd, (GetSystemMetrics( SM_CXSCREEN ) - xWidth) / 2,
+			(GetSystemMetrics( SM_CYSCREEN ) - xHeight) / 2,xWidth, xHeight, FALSE );
 		if(hWnd)
 		{
 			hMainDlg = hWnd;
@@ -222,7 +224,8 @@ namespace ctWin32Dialog
 	// proc == callback : function<int CALLBACK( DWORD )>
 	// ext : bCaptionFont == true ? fontsize=16 : fontsize=system-default
 	bool ctDialog::createPart( string className, string windowName, DWORD partType,
-		int x, int y, int width, int height, string partName, CommandCallback proc, int bCaptionFontsize )
+		int x, int y, int width, int height, string partName, 
+		CommandCallback proc,  int bCaptionFontsize )
 	{
 		// 获取一个id
 		auto getwindowid = [&]()->int {
@@ -353,6 +356,20 @@ namespace ctWin32Dialog
 		}
 		return nullptr;
 	}
+
+	// progress bar
+	bool ctDialog::createProgress( int x, int y, string partName, int defaultRange, int width, int height )
+	{
+		bool bret = createPart( "msctls_progress32", "progress", NULL, x, y, width, height, partName, nullptr );
+		SendMessage( getWnd( partName ), PBM_SETRANGE, 0, MAKELONG( 0, defaultRange ) );
+		SendMessage( getWnd( partName ), PBM_SETPOS, 0, 0 );
+		return bret;
+	}
+	void ctDialog::setProgressPos( string partName, int xpos )
+	{
+		SendMessage( getWnd( partName ), PBM_SETPOS, (WPARAM)xpos, 0 );
+	}
+
 	//
 	// 画控件 (注意:这样的控件不会保存进allcreated)
 	//
@@ -377,6 +394,7 @@ namespace ctWin32Dialog
 		bmpInfos.clear();
 		InvalidateRect( hMainDlg, NULL, FALSE );
 	}
+
 	// draw line (保存记录后从wm_paint里画的)
 	// line =>  sx,sy -> ex,ey
 	void ctDialog::drawLine( int sx, int sy, int ex, int ey, COLORREF col, string partName )

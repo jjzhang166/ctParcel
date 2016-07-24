@@ -76,7 +76,8 @@ namespace ctWin32Dialog
 		// proc == callback : function<int CALLBACK( DWORD )>
 		// ext : bCaptionFont == true ? fontsize=16 : fontsize=system-default
 		bool createPart( string className, string windowName, DWORD partType,
-			int x, int y, int width, int height, string partName, CommandCallback proc = nullptr, int bCaptionFontsize = 0 );
+			int x, int y, int width, int height, string partName, 
+			CommandCallback proc = nullptr, int bCaptionFontsize = 0 );
 		// partName == "*" 时为删除所有
 		bool deletePart( string partName );
 		void deleteAllPart();
@@ -103,14 +104,10 @@ namespace ctWin32Dialog
 			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER );
 		bool setEditText( string partName, string editContent );
 		string getEditText( string partName );
-		// progress base
-		bool createProgress(int x,int y, string partName = "progress", int defaultRange=100, int width = 400, int height = 20 )
-		{
-			bool bret = createPart( "msctls_progress32", "progress", NULL, x, y, width, height, partName, nullptr );
-			SendMessage( getWnd( partName ), PBM_SETRANGE, 0, MAKELONG( 0, defaultRange ) );
-			SendMessage( getWnd( partName ), PBM_SETPOS, 0, 0 );
-			return bret;
-		}
+		// progress bar
+		bool createProgress( int x, int y, string partName = "progress", 
+			int defaultRange = 100, int width = 400, int height = 20 );
+		void setProgressPos( string partName, int xpos );
 
 		//
 		// 画控件 (注意:这样的控件不会保存进allcreated)

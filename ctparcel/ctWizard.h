@@ -20,6 +20,7 @@ namespace ctWin32Wizard
 			ctd.createMainDialog( w, h );
 			ctd.setTitle( "地面测试中心" );
 			page1( ctd.hMainDlg, 0 );
+			
 			ctd.showMainDialog();
 		}
 		int CALLBACK page1( HWND hDlg, DWORD windowId )
@@ -124,7 +125,7 @@ namespace ctWin32Wizard
 		{
 			for(int i=0; i < 100; i++)
 			{
-				SendMessage( ctd.getWnd( "extract" ), PBM_SETPOS, (WPARAM)i, 0 );
+				ctd.setProgressPos( "extract", i );
 				Sleep( 10 );
 			}
 
