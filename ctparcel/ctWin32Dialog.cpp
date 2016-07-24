@@ -223,7 +223,7 @@ namespace ctWin32Dialog
 	// partName@param provide for deletePart()
 	// proc == callback : function<int CALLBACK( DWORD )>
 	// ext : bCaptionFont == true ? fontsize=16 : fontsize=system-default
-	bool ctDialog::createPart( string className, string windowName, DWORD partType,
+	HWND ctDialog::createPart( string className, string windowName, DWORD partType,
 		int x, int y, int width, int height, string partName, 
 		CommandCallback proc,  int bCaptionFontsize )
 	{
@@ -255,10 +255,10 @@ namespace ctWin32Dialog
 
 			allcreated.push_back( {partName,windowId,hWnd} );
 			regCommandMap.insert( pair<int, CommandCallback>( windowId, proc ) );
-			return true;
+			return hWnd;
 		}
 
-		return false;
+		return NULL;
 	}
 	// partName == "*" 时为删除所有
 	bool ctDialog::deletePart( string partName )
@@ -320,20 +320,28 @@ namespace ctWin32Dialog
 	bool ctDialog::createText( string content, int x, int y, int width, int height,
 		int isCaptionSize, string partName )
 	{
-		return createPart( "STATIC", content, NULL, x, y, width, height, partName, nullptr, isCaptionSize );
+		return createPart( "STATIC", content, NULL, x, y, width, height, partName, nullptr, isCaptionSize ) != 0;
 	}
 	// push-button
 	bool ctDialog::createbutton( string content, int x, int y, 
 		CommandCallback proc,int width, int height, string partName )
 	{
-		return createPart( "button", content, BS_PUSHBUTTON, x, y, width, height, partName, proc );
+		return createPart( "button", content, BS_PUSHBUTTON, x, y, width, height, partName, proc ) != 0;
+	}
+	// check box
+	bool ctDialog::createCheckbox( string content, int x, int y, 
+		CommandCallback proc,int width, int height, string partName )
+	{
+		HWND hc = createPart( "button", content, BS_AUTOCHECKBOX, x, y, width, height, partName, proc );
+		SendMessage( hc, BM_SETCHECK, 1, 0 );
+		return hc != 0;
 	}
 	// edit
 	// @partType = WS_BORDER
 	bool ctDialog::createEdit( int x, int y, int width, int height, 
 		string partName, string defaultContent, DWORD partType )
 	{
-		return createPart( "EDIT", defaultContent, partType, x, y, width, height, partName );
+		return createPart( "EDIT", defaultContent, partType, x, y, width, height, partName ) != 0;
 	}
 	bool ctDialog::setEditText(string partName,string editContent)
 	{
@@ -356,14 +364,13 @@ namespace ctWin32Dialog
 		}
 		return nullptr;
 	}
-
 	// progress bar
 	bool ctDialog::createProgress( int x, int y, string partName, int defaultRange, int width, int height )
 	{
-		bool bret = createPart( "msctls_progress32", "progress", NULL, x, y, width, height, partName, nullptr );
-		SendMessage( getWnd( partName ), PBM_SETRANGE, 0, MAKELONG( 0, defaultRange ) );
-		SendMessage( getWnd( partName ), PBM_SETPOS, 0, 0 );
-		return bret;
+		HWND hp = createPart( "msctls_progress32", "progress", NULL, x, y, width, height, partName, nullptr );
+		SendMessage( hp, PBM_SETRANGE, 0, MAKELONG( 0, defaultRange ) );
+		SendMessage( hp, PBM_SETPOS, 0, 0 );
+		return hp!=0;
 	}
 	void ctDialog::setProgressPos( string partName, int xpos )
 	{

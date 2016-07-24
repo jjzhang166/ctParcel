@@ -113,7 +113,9 @@ namespace ctWin32Wizard
 			ctd.setForecolor( RGB( 255, 255, 255 ), {0,0,ctd.hMainDlgRect.right,290} );
 			ctd.createText( "%s 安装向导完成", 180, 20, 300, 22, 16 );
 			ctd.createText( "安装程序已在您的电脑中安装了 %s . 此应用程序可以通过选择安装的快捷方式运行.\n\n单击'完成'退出安装程序.", 180, 50, 300, 200 );
-			ctd.createbutton( "完成(F)", 300, 300 );
+			ctd.createCheckbox( "运行 %s", 180, 111 );
+
+			ctd.createbutton( "完成(F)", 300, 300,PARTCALLBACK( end ) );
 			return 0;
 		}
 
@@ -121,6 +123,11 @@ namespace ctWin32Wizard
 		//
 		// 功能
 		//
+		int CALLBACK end( HWND hDlg, DWORD windowId )
+		{
+			PostQuitMessage( 0 );
+			return 0;
+		}
 		void setupInfo()
 		{
 			for(int i=0; i < 100; i++)
