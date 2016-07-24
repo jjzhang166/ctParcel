@@ -7,6 +7,8 @@
 #include <functional>
 #include <thread>
 #include <Shlobj.h>
+#include <commctrl.h>			
+#pragma comment(lib, "comctl32") 
 
 namespace ctWin32Dialog
 {
@@ -66,7 +68,7 @@ namespace ctWin32Dialog
 		void showMainDialog();
 
 		// chooseFolders -> 选择文件夹界面 -> 选定后直接放入partNameEdit中 
-		bool chooseFolders( string partNameEdit );
+		string chooseFolders( );
 
 		// 增加删除控件
 		// CreateWindow@param : className , windowName, x ,y ,width, height (partType = partType | WS_VISIBLE | WS_CHILD )
@@ -101,6 +103,14 @@ namespace ctWin32Dialog
 			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER );
 		bool setEditText( string partName, string editContent );
 		string getEditText( string partName );
+		// progress base
+		bool createProgress(int x,int y, string partName = "progress", int defaultRange=100, int width = 400, int height = 20 )
+		{
+			bool bret = createPart( "msctls_progress32", "progress", NULL, x, y, width, height, partName, nullptr );
+			SendMessage( getWnd( partName ), PBM_SETRANGE, 0, MAKELONG( 0, defaultRange ) );
+			SendMessage( getWnd( partName ), PBM_SETPOS, 0, 0 );
+			return bret;
+		}
 
 		//
 		// 画控件 (注意:这样的控件不会保存进allcreated)

@@ -19,6 +19,8 @@ namespace ctWin32Dialog
 	ctDialog::ctDialog()
 	{
 		appInstance = GetModuleHandleA( nullptr );
+		//进度条 PROGRESS_CLASS
+		InitCommonControls(); 
 	}
 	ctDialog::~ctDialog()
 	{
@@ -200,7 +202,7 @@ namespace ctWin32Dialog
 	}
 
 	// chooseFolders -> 选择文件夹界面 -> 选定后直接放入partNameEdit中 
-	bool ctDialog::chooseFolders( string partNameEdit )
+	string ctDialog::chooseFolders( )
 	{
 		BROWSEINFOA bi = {0};
 		LPITEMIDLIST pIDList;
@@ -208,14 +210,10 @@ namespace ctWin32Dialog
 		bi.lpszTitle = "选择文件夹";
 		bi.ulFlags = BIF_RETURNONLYFSDIRS;
 		pIDList = SHBrowseForFolderA( &bi );
+		char tmp[260] = {0};
 		if(pIDList)
-		{
-			char tmp[260];
 			SHGetPathFromIDListA( pIDList, tmp );
-			setEditText( partNameEdit, tmp );
-			return true;
-		}
-		return FALSE;
+		return string( tmp );
 	}
 
 	// 增加删除控件
@@ -241,19 +239,23 @@ namespace ctWin32Dialog
 		// 创建窗口
 		HWND hWnd = CreateWindowA( className.c_str(), windowName.c_str(), WS_VISIBLE | WS_CHILD | partType,
 			x, y, width, height, hMainDlg, (HMENU)windowId, appInstance, nullptr );
-		//字体
-		HFONT font = (HFONT)GetStockObject( DEFAULT_GUI_FONT );
-		if(bCaptionFontsize)
+		if(hWnd)
 		{
-			font = CreateFont( bCaptionFontsize, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
-				OUT_TT_PRECIS, CLIP_TT_ALWAYS, PROOF_QUALITY, VARIABLE_PITCH | FF_SWISS, TEXT( "宋体" ) );
-		}
-		SendMessage( hWnd, WM_SETFONT, (WPARAM)font, TRUE );
-		UpdateWindow( hMainDlg );
+			HFONT font = (HFONT)GetStockObject( DEFAULT_GUI_FONT );
+			if(bCaptionFontsize)
+			{
+				font = CreateFont( bCaptionFontsize, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
+					OUT_TT_PRECIS, CLIP_TT_ALWAYS, PROOF_QUALITY, VARIABLE_PITCH | FF_SWISS, TEXT( "宋体" ) );
+			}
+			SendMessage( hWnd, WM_SETFONT, (WPARAM)font, TRUE );
+			UpdateWindow( hMainDlg );
 
-		allcreated.push_back( {partName,windowId,hWnd} );
-		regCommandMap.insert( pair<int, CommandCallback>( windowId, proc ) );
-		return true;
+			allcreated.push_back( {partName,windowId,hWnd} );
+			regCommandMap.insert( pair<int, CommandCallback>( windowId, proc ) );
+			return true;
+		}
+
+		return false;
 	}
 	// partName == "*" 时为删除所有
 	bool ctDialog::deletePart( string partName )
