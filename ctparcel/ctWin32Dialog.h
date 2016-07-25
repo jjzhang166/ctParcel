@@ -104,7 +104,7 @@ namespace ctWin32Dialog
 			int width = 150, int height = 22, string partName = "checkbox" );
 		// edit
 		bool createEdit( int x, int y, int width, int height = 20, 
-			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER );
+			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER|ES_MULTILINE );
 		bool setEditText( string partName, string editContent );
 		string getEditText( string partName );
 		// progress bar

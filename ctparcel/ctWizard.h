@@ -234,24 +234,29 @@ namespace ctWin32Wizard
 		}
 		#define GETSETUPSTRING(i) getString(i).c_str()
 
-
 		//初始化需要安装的一些信息
-		void initSetupInfomation()
+		bool initSetupInfomation()
 		{
 			addedsec = getAddedSector();
+
+			//判断安装包有效性
+			//if( addedsec->verifycode != 0 ||  addedsec->nfiles < 4)
+			//	return false;
 
 			//释放临时文件到临时文件夹
 			for(int i=0;i<4;i++)
 				outputFile(i);
+			return true;
 		}
 
 		//////////////////////////////////////////////////////////////////////////
 		// UI
-	public:
-		ctWizard() : step(0)
+		ctWizard() : step(0), setuppath("c:\\testpath")
 		{
-			initSetupInfomation();
-			start();
+			if(initSetupInfomation())
+				start();
+			else
+				MessageBoxA( 0, "安装包错误!", 0, MB_ICONERROR );
 		}
 		
 		void start(int w=510,int h=370)
@@ -293,7 +298,7 @@ namespace ctWin32Wizard
 			ctd.drawBmp( TMP_folders, 40, 75, 36, 36 );
 			ctd.createText( GETSETUPSTRING( 14 ), 90, 85, 350, 15 );
 			ctd.createText( GETSETUPSTRING( 15 ), 40, 120, 400, 15 );
-			ctd.createEdit( 40, 145, 300,20 , "path","c:\\testPath");
+			ctd.createEdit( 40, 145, 300,20 , "path", setuppath.c_str());
 			ctd.createbutton( GETSETUPSTRING( 16 ), 350, 144, PARTCALLBACK( choosefile ) );
 			ctd.createbutton( GETSETUPSTRING(2), 200, 300, PARTCALLBACK( page1 ) );
 			ctd.createbutton( GETSETUPSTRING(3), 300, 300, PARTCALLBACK( page3 ) );
@@ -306,6 +311,9 @@ namespace ctWin32Wizard
 			setuppath = ctd.getEditText( "path" );		//先读取之前page2中的path
 			ctd.clearDlg();
 
+			char tmp[200];
+			wsprintfA( tmp, "%s\r\n\t%s", GETSETUPSTRING(30),setuppath.c_str() );
+
 			ctd.setForecolor( RGB( 255, 255, 255 ), {0,0,ctd.hMainDlgRect.right,60} );
 			ctd.drawLine( 0, 60, 510, 60, (COLORREF)0xA0A0A0 );
 			ctd.drawLine( 0, 290, 510, 290, (COLORREF)0xA0A0A0 );
@@ -315,7 +323,7 @@ namespace ctWin32Wizard
 			ctd.createText( GETSETUPSTRING( 19 ), 40, 75, 400, 15 );
 			ctd.createEdit( 40, 100, 400, 170, "lastshow" );
 			PostMessageW( ctd.getWnd("lastshow"), EM_SETREADONLY, 1, 0 );		//设置为只读
-			ctd.setEditText( "lastshow", "目标位置:\r\n\tc:\\testSetup" );
+			ctd.setEditText( "lastshow", tmp );
 			ctd.createbutton( GETSETUPSTRING(2), 200, 300, PARTCALLBACK( page2 ) );
 			ctd.createbutton( GETSETUPSTRING(6), 300, 300, PARTCALLBACK( page4 ) );
 			ctd.createbutton( GETSETUPSTRING(4), 400, 300, PARTCALLBACK( cancel ) );
@@ -361,7 +369,6 @@ namespace ctWin32Wizard
 			ctd.createbutton( GETSETUPSTRING(7), 300, 300,PARTCALLBACK( end ) );
 			return 0;
 		}
-
 
 		//
 		// UI功能
