@@ -59,7 +59,7 @@ namespace ctWin32Dialog
 
 		// 对话框callback
 		LRESULT CALLBACK mainWndCallback( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
-		// 初始化对话框面板
+		// 创建对话框面板
 		bool createMainDialog( int xWidth, int xHeight,
 			COLORREF xbgColor = COLOR_GRAY, COLORREF xforeColor = COLOR_WHITE,
 			RECT xforeRect = {0}, COLORREF xfontColor = COLOR_BALCK );
