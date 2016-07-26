@@ -105,7 +105,7 @@ namespace ctWin32Dialog
 		// edit
 		bool createEdit( int x, int y, int width, int height = 20, 
 			string partName = "edit",  string defaultContent = "",  DWORD partType = WS_BORDER|ES_MULTILINE );
-		bool setEditText( string partName, string editContent );
+		bool setText( string partName, string text );
 		string getEditText( string partName );
 		// progress bar
 		bool createProgress( int x, int y, string partName = "progress", 
@@ -141,10 +141,10 @@ namespace ctWin32Dialog
 
 	public:
 		HWND hMainDlg;
+		HINSTANCE appInstance;
 		RECT hMainDlgRect;
 
 	private:
-		HINSTANCE appInstance;
 		COLORREF bgColor, fontColor, foreColor;
 		RECT forecolorRect;
 		// 记录所有bmpImages的信息

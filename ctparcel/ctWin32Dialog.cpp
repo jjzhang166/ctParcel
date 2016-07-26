@@ -343,12 +343,12 @@ namespace ctWin32Dialog
 	{
 		return createPart( "EDIT", defaultContent, partType, x, y, width, height, partName ) != 0;
 	}
-	bool ctDialog::setEditText(string partName,string editContent)
+	bool ctDialog::setText(string partName,string text)
 	{
 		HWND hedit = getWnd( partName );
 		if(hedit)
 		{
-			SetWindowTextA( hedit, editContent.c_str() );
+			SetWindowTextA( hedit, text.c_str() );
 			return true;
 		}
 		return false;

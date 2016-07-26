@@ -1,8 +1,10 @@
 #pragma once
 
+#include <shlobj.h>  
 #include "ctWin32Dialog.h"
+#include "resource.h"
 
-namespace ctWin32Wizard
+namespace ctPEFile
 {
 	//
 	// simple load pe class
@@ -61,8 +63,12 @@ namespace ctWin32Wizard
 			return false;
 		}
 	};
+}
 
 
+namespace ctWin32Wizard
+{
+	//
 	// PARTCALLBACK(prc) 生成一个lambda 用来调用成员函数的回调函数
 	#define PARTCALLBACK(proc) [=](HWND hDlg,DWORD windowId)->int{return proc(hDlg,windowId);}
 	// 在生成的最终exe的文件后面添加一个结构,这个结构包含了必须的UI图片/配置/压缩文件等
@@ -114,8 +120,8 @@ namespace ctWin32Wizard
 	安装程序准备在你的电脑上安装。
 	点击"安装"继续,如果你想修改设置请点击"上一步"。
 	正在安装
-	正在安装 %s, 请稍后。。。
-	正在提取文件。。。
+	正在安装 %s, 请稍后...
+	正在提取文件...
 	%s 安装向导完成
 	安装程序已在您的电脑中安装了 %s 。 此应用程序可以通过选择安装的快捷方式运行。
 	单击'完成'退出安装程序。
@@ -138,7 +144,7 @@ namespace ctWin32Wizard
 	class ctWizard
 	{
 	public:
-		PEFile selfpe;
+		ctPEFile::PEFile selfpe;
 
 		//////////////////////////////////////////////////////////////////////////
 		// setup功能
@@ -171,8 +177,12 @@ namespace ctWin32Wizard
 			return nullptr;
 		}
 
+		//
 		//释放文件到指定位置
-		void outputFile(int ifile)
+		//
+		//如果传入的文件数量错误->函数会crash
+		//
+		void extractFile(int ifile)
 		{
 			fileblock* fb = getFileBlock( ifile );
 			if(fb)
@@ -184,6 +194,25 @@ namespace ctWin32Wizard
 					GetTempPathA( 260, extractPath );
 					lstrcatA( extractPath, fb->filename );
 				}
+				else
+				{
+					if( fb->relativepath[0] )
+					{
+						//if relativepath exist, create folders
+						char dir[260];
+						wsprintfA( dir, "%s\\%s", setuppath.c_str(), fb->relativepath );
+						SHCreateDirectoryExA( NULL, dir, NULL );
+						wsprintfA( extractPath, "%s\\%s\\%s", setuppath.c_str(), fb->relativepath, fb->filename );
+					}
+					else
+					{
+						wsprintfA( extractPath, "%s\\%s", setuppath.c_str(), fb->filename );
+					}
+				}
+
+				ctd.setText( "showpath", extractPath );
+				//Sleep( 100 );
+				//return;
 
 				byte* filebuf = (byte*)((DWORD)fb + sizeof( fileblock ));
 				FILE *f = nullptr;
@@ -193,8 +222,6 @@ namespace ctWin32Wizard
 					fwrite( filebuf, 1, fb->filesize, f );
 					fclose( f );
 				}
-
-				//MessageBoxA( 0, extractPath, 0, 0 );
 			}
 		}
 
@@ -243,33 +270,50 @@ namespace ctWin32Wizard
 			//if( addedsec->verifycode != 0 ||  addedsec->nfiles < 4)
 			//	return false;
 
-			//释放临时文件到临时文件夹
+			//释放临时文件[setup temp file]到临时文件夹 
 			for(int i=0;i<4;i++)
-				outputFile(i);
+				extractFile(i);
+
 			return true;
 		}
 
 		//////////////////////////////////////////////////////////////////////////
-		// UI
-		ctWizard() : step(0), setuppath("c:\\testpath")
+		ctWizard()
 		{
 			if(initSetupInfomation())
+			{
+				filescount = addedsec->nfiles;
+				setuppath = "e:\\22222";
+
+				//char programpath[260];
+				//SHGetSpecialFolderPathA( NULL, programpath, CSIDL_PROGRAM_FILES, FALSE );
+				//setuppath = programpath;
+				//setuppath += "\\";
+				//setuppath += addedsec->programName;
+
 				start();
+			}
 			else
 				MessageBoxA( 0, "安装包错误!", 0, MB_ICONERROR );
 		}
 		
+		//
+		// UI 
+		//
 		void start(int w=510,int h=370)
 		{
 			ctd.createMainDialog( w, h );
 			ctd.setTitle( GETSETUPSTRING(1) );
 			page1( ctd.hMainDlg, 0 );
 			
+			HICON hIcon = LoadIconA( ctd.appInstance, MAKEINTRESOURCEA( IDI_ICON1 ) );
+			SendMessageA( ctd.hMainDlg, WM_SETICON, TRUE, (LPARAM)hIcon );
+			
+			//UI线程这里阻塞
 			ctd.showMainDialog();
 		}
 		int CALLBACK page1( HWND hDlg, DWORD windowId )
 		{
-			step = 1;
 			ctd.clearDlg();
 
 			ctd.drawLine( 0, 290, 510, 290, (COLORREF)0xA0A0A0 );
@@ -286,7 +330,6 @@ namespace ctWin32Wizard
 		}
 		int CALLBACK page2( HWND hDlg, DWORD windowId )
 		{
-			step = 2;
 			ctd.clearDlg();
 
 			ctd.setForecolor( RGB( 255, 255, 255 ), {0,0,ctd.hMainDlgRect.right,60} );
@@ -307,7 +350,6 @@ namespace ctWin32Wizard
 		}
 		int CALLBACK page3( HWND hDlg, DWORD windowId )
 		{
-			step = 3;
 			setuppath = ctd.getEditText( "path" );		//先读取之前page2中的path
 			ctd.clearDlg();
 
@@ -323,7 +365,7 @@ namespace ctWin32Wizard
 			ctd.createText( GETSETUPSTRING( 19 ), 40, 75, 400, 15 );
 			ctd.createEdit( 40, 100, 400, 170, "lastshow" );
 			PostMessageW( ctd.getWnd("lastshow"), EM_SETREADONLY, 1, 0 );		//设置为只读
-			ctd.setEditText( "lastshow", tmp );
+			ctd.setText( "lastshow", tmp );
 			ctd.createbutton( GETSETUPSTRING(2), 200, 300, PARTCALLBACK( page2 ) );
 			ctd.createbutton( GETSETUPSTRING(6), 300, 300, PARTCALLBACK( page4 ) );
 			ctd.createbutton( GETSETUPSTRING(4), 400, 300, PARTCALLBACK( cancel ) );
@@ -331,7 +373,6 @@ namespace ctWin32Wizard
 		}
 		int CALLBACK page4( HWND hDlg, DWORD windowId )
 		{
-			step = 4;
 			ctd.clearDlg();
 
 			ctd.setForecolor( RGB( 255, 255, 255 ), {0,0,ctd.hMainDlgRect.right,60} );
@@ -341,21 +382,21 @@ namespace ctWin32Wizard
 			ctd.createText( GETSETUPSTRING( 20 ), 20, 15, 200, 15, 12 );
 			ctd.createText( GETSETUPSTRING( 21 ), 40, 35, 300, 15 );
 			ctd.createText( GETSETUPSTRING( 22 ), 40, 75, 400, 15 );
-			ctd.createbutton( GETSETUPSTRING(3), 400, 300, PARTCALLBACK( cancel ) );
-			
-			//这里可以设置进度为文件数量,每次释放一个文件 +1进度 tmp=100
-			ctd.createProgress( 40, 120, "extract",100 );
-			std::thread t1( &ctWizard::setupInfo ,this);
-			t1.detach();
-
+			ctd.createbutton( GETSETUPSTRING(4), 400, 300, PARTCALLBACK( cancel ) );
+			//创建一个text 以供显示安装的文件名信息
+			ctd.createText( "", 40, 95, 400, 15,0,"showpath" );
 			//创建一个隐藏按钮,可以通过他到page5
 			ctd.createbutton( GETSETUPSTRING(5), 300, 300, PARTCALLBACK( page5 ),85,22,"overbutton" );
 			ShowWindow( ctd.getWnd( "overbutton" ), 0 );
+
+			//这里可以设置进度为文件数量,每次释放一个文件 +1进度
+			ctd.createProgress( 40, 120, "extract", filescount );
+			std::thread t1( &ctWizard::installing, this );
+			t1.detach();
 			return 0;
 		}
 		int CALLBACK page5( HWND hDlg, DWORD windowId )
 		{
-			step = 5;
 			ctd.clearDlg();
 
 			ctd.drawLine( 0, 290, 510, 290, (COLORREF)0xA0A0A0 );
@@ -371,26 +412,28 @@ namespace ctWin32Wizard
 		}
 
 		//
-		// UI功能
+		// UI function
 		//
 		int CALLBACK end( HWND hDlg, DWORD windowId )
 		{
 			PostQuitMessage( 0 );
 			return 0;
 		}
-		void setupInfo()
+		void installing()
 		{
-			for(int i=0; i < 100; i++)
+			// from 4 to max  [0-3 is tmpfile]
+			for(int i=4; i < filescount; i++)
 			{
+				extractFile( i );
 				ctd.setProgressPos( "extract", i );
-				Sleep( 10 );
 			}
 
+			// over extract 
 			SendMessageA( ctd.getWnd( "overbutton" ), BM_CLICK, 0, 0 );
 		}
 		int CALLBACK choosefile( HWND hDlg, DWORD windowId )
 		{
-			ctd.setEditText( "path", ctd.chooseFolders() );
+			ctd.setText( "path", ctd.chooseFolders() );
 			return 0;
 		}
 		int CALLBACK cancel( HWND hDlg, DWORD windowId )
@@ -409,7 +452,7 @@ namespace ctWin32Wizard
 
 
 	private:
-		unsigned int step;
+		int filescount;
 		std::string setuppath;
 		ctWin32Dialog::ctDialog ctd;
 		addedSector* addedsec;

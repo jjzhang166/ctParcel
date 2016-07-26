@@ -144,10 +144,17 @@
   <ItemGroup>
     <ClInclude Include="ctWin32Dialog.h" />
     <ClInclude Include="ctWizard.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ctparcel.cpp" />
     <ClCompile Include="ctWin32Dialog.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="setup.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
