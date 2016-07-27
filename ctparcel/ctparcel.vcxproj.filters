@@ -24,12 +24,18 @@
     <ClInclude Include="resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="unzip.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ctparcel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ctWin32Dialog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="unzip.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

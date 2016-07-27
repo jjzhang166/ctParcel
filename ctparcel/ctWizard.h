@@ -3,6 +3,7 @@
 #include <shlobj.h>  
 #include "ctWin32Dialog.h"
 #include "resource.h"
+#include "unzip.h"
 
 namespace ctPEFile
 {
@@ -83,10 +84,11 @@ namespace ctWin32Wizard
     };
     struct addedSector
     {
-        DWORD verifycode;				// 0
+        DWORD verifycode;               // 0
 
         char compressType[10];			// 压缩方式
         char programName[20];			// 安装包的程序名
+        char autorun[150];              // 自动运行程序的相对路径
 
         int nfiles;						// 总文件数量
                                         //
@@ -192,7 +194,7 @@ namespace ctWin32Wizard
                 {
                     //临时文件,直接释放到临时目录
                     GetTempPathA( 260, extractPath );
-                    lstrcatA( extractPath, fb->filename );
+                    strcat( extractPath, fb->filename );
                 }
                 else
                 {
@@ -214,13 +216,38 @@ namespace ctWin32Wizard
                 //Sleep( 100 );
                 //return;
 
+                auto writetoexfile = [&]( void* filebuf, DWORD fsize ) {
+                    FILE *f = nullptr;
+                    fopen_s( &f, extractPath, "wb" );
+                    if(f)
+                    {
+                        fwrite( filebuf, 1, fsize, f );
+                        fclose( f );
+                    }
+                };
+
                 byte* filebuf = (byte*)((DWORD)fb + sizeof( fileblock ));
-                FILE *f = nullptr;
-                fopen_s( &f, extractPath, "wb" );
-                if(f)
+
+                //存在压缩时,先解压
+                if(compress == "zip")
                 {
-                    fwrite( filebuf, 1, fb->filesize, f );
-                    fclose( f );
+                    //-unzip to a membuffer -
+                    HZIP hz = OpenZip( filebuf, fb->filesize, 0 );
+                    if(hz)
+                    {
+                        ZIPENTRY ze;
+                        int i;
+                        FindZipItem( hz, fb->filename, true, &i, &ze );
+                        char *ibuf = new char[ze.unc_size];
+                        UnzipItem( hz, i, ibuf, ze.unc_size );
+                        writetoexfile( ibuf, ze.unc_size );         //写入
+                        delete[] ibuf;
+                        CloseZip( hz );
+                    }
+                }
+                else
+                {
+                    writetoexfile( filebuf, fb->filesize );         //写入
                 }
             }
         }
@@ -230,7 +257,7 @@ namespace ctWin32Wizard
         {
             char tmp[260];
             GetTempPathA( 260, tmp );
-            lstrcatA( tmp, fileName );
+            strcat( tmp, fileName );
             return std::string( tmp );
         }
         #define  TMP_WizardImage		getTempFile("WizardImage.bmp").c_str()
@@ -261,28 +288,22 @@ namespace ctWin32Wizard
         }
         #define GETSETUPSTRING(i) getString(i).c_str()
 
-        //初始化需要安装的一些信息
-        bool initSetupInfomation()
-        {
-            addedsec = getAddedSector();
-
-            //判断安装包有效性
-            //if( addedsec->verifycode != 0 ||  addedsec->nfiles < 4)
-            //	return false;
-
-            //释放临时文件[setup temp file]到临时文件夹 
-            for(int i = 0; i < 4; i++)
-                extractFile( i );
-
-            return true;
-        }
 
         //////////////////////////////////////////////////////////////////////////
         ctWizard()
         {
-            if(initSetupInfomation())
+            addedsec = getAddedSector();
+
+            //判断安装包有效性
+            //if( addedsec->verifycode != 0 ||  addedsec->nfiles < 4) {
+            //  MessageBoxA( 0, "安装包错误!", 0, MB_ICONERROR );
+            //  return;
+            //}
+
+            if(addedsec)
             {
                 filescount = addedsec->nfiles;
+                compress = addedsec->compressType;
 
                 char programpath[260];
                 SHGetSpecialFolderPathA( NULL, programpath, CSIDL_PROGRAM_FILES, FALSE );
@@ -290,10 +311,12 @@ namespace ctWin32Wizard
                 setuppath += "\\";
                 setuppath += addedsec->programName;
 
+                //释放临时文件[setup temp file]到临时文件夹 
+                for(int i = 0; i < 4; i++)
+                    extractFile( i );
+
                 start();
-            }
-            else
-                MessageBoxA( 0, "安装包错误!", 0, MB_ICONERROR );
+            } 
         }
 
         //
@@ -383,7 +406,7 @@ namespace ctWin32Wizard
             ctd.createText( GETSETUPSTRING( 22 ), 40, 75, 400, 15 );
             ctd.createbutton( GETSETUPSTRING( 4 ), 400, 300, PARTCALLBACK( cancel ) );
             //创建一个text 以供显示安装的文件名信息
-            ctd.createText( "", 40, 95, 400, 15, 0, "showpath" );
+            ctd.createText( "", 40, 95, 450, 15, 0, "showpath" );
             //创建一个隐藏按钮,可以通过他到page5
             ctd.createbutton( GETSETUPSTRING( 5 ), 300, 300, PARTCALLBACK( page5 ), 85, 22, "overbutton" );
             ShowWindow( ctd.getWnd( "overbutton" ), 0 );
@@ -415,11 +438,29 @@ namespace ctWin32Wizard
         //
         int CALLBACK end( HWND hDlg, DWORD windowId )
         {
+            //安装完毕后 自动运行的程序
+            if(addedsec->autorun[0])
+            {
+                char runpath[260];
+                wsprintfA( runpath, "%s\\%s", setuppath.c_str(), addedsec->autorun );
+                //MessageBoxA( 0, runpath, 0, 0 );
+
+                PROCESS_INFORMATION backpi;
+                STARTUPINFO si;
+                memset( &si, 0, sizeof( si ) );
+                memset( &backpi, 0, sizeof( backpi ) );
+                si.cb = sizeof( si );
+                CreateProcessA( 0, runpath, 0, 0, 0, 0, 0, setuppath.c_str(), &si, &backpi );
+                CloseHandle( backpi.hProcess );
+            }
+
             PostQuitMessage( 0 );
             return 0;
         }
         void installing()
         {
+            CreateDirectoryA(setuppath.c_str(),NULL);
+
             // from 4 to max  [0-3 is tmpfile]
             for(int i = 4; i < filescount; i++)
             {
@@ -427,7 +468,7 @@ namespace ctWin32Wizard
                 ctd.setProgressPos( "extract", i );
             }
 
-            // over extract 
+            // goto end page  
             SendMessageA( ctd.getWnd( "overbutton" ), BM_CLICK, 0, 0 );
         }
         int CALLBACK choosefile( HWND hDlg, DWORD windowId )
@@ -453,6 +494,7 @@ namespace ctWin32Wizard
     private:
         int filescount;
         std::string setuppath;
+        std::string compress;
         ctWin32Dialog::ctDialog ctd;
         addedSector* addedsec;
     };

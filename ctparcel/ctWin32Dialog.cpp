@@ -160,7 +160,7 @@ namespace ctWin32Dialog
         hMainDlgRect = {0,0,xWidth,xHeight};
 
         // register class
-        WNDCLASSEXW wcex = {0};
+        WNDCLASSEXA wcex = {0};
         wcex.cbSize = sizeof( WNDCLASSEX );
         wcex.style = CS_HREDRAW | CS_VREDRAW;
         wcex.lpfnWndProc = staticWndCallback;	//跳转到代理static函数
@@ -170,7 +170,7 @@ namespace ctWin32Dialog
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wcex.lpszClassName = szClass;
         wcex.hCursor = LoadCursor( nullptr, IDC_ARROW );
-        RegisterClassExW( &wcex );
+        RegisterClassExA(&wcex );
 
         // create main window
         HWND hWnd = CreateWindow( szClass, TEXT( "ctDialog" ), WS_OVERLAPPEDWINDOW&~WS_MAXIMIZEBOX&~WS_THICKFRAME,
