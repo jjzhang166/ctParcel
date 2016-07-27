@@ -4,6 +4,13 @@
 #include "ctWin32Dialog.h"
 #include "resource.h"
 #include "unzip.h"
+#include "common.h"
+
+
+
+
+
+
 
 namespace ctPEFile
 {
@@ -306,7 +313,7 @@ namespace ctWin32Wizard
                 compress = addedsec->compressType;
 
                 char programpath[260];
-                SHGetSpecialFolderPathA( NULL, programpath, CSIDL_PROGRAM_FILES, FALSE );
+                ctCommon::GetProgramPath( programpath );
                 setuppath = programpath;
                 setuppath += "\\";
                 setuppath += addedsec->programName;
@@ -438,20 +445,16 @@ namespace ctWin32Wizard
         //
         int CALLBACK end( HWND hDlg, DWORD windowId )
         {
-            //安装完毕后 自动运行的程序
+            //安装完毕后 桌面快捷方式/自动运行的程序
             if(addedsec->autorun[0])
             {
+                //create desktop shortcut
+                ctCommon::CreateDesktopShotCut( addedsec->programName,addedsec->autorun, setuppath.c_str() );
+
+                //run
                 char runpath[260];
                 wsprintfA( runpath, "%s\\%s", setuppath.c_str(), addedsec->autorun );
-                //MessageBoxA( 0, runpath, 0, 0 );
-
-                PROCESS_INFORMATION backpi;
-                STARTUPINFO si;
-                memset( &si, 0, sizeof( si ) );
-                memset( &backpi, 0, sizeof( backpi ) );
-                si.cb = sizeof( si );
-                CreateProcessA( 0, runpath, 0, 0, 0, 0, 0, setuppath.c_str(), &si, &backpi );
-                CloseHandle( backpi.hProcess );
+                ctCommon::Runexe( runpath, (char*)(setuppath.c_str()) );
             }
 
             PostQuitMessage( 0 );
