@@ -2,10 +2,8 @@
 
 #include <shlobj.h>  
 #include "ctWin32Dialog.h"
-#include "resource.h"
 #include "unzip.h"
-
-
+#include "resource.h"
 
 namespace ctCommon
 {
