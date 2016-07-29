@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctparcel", "ctparcel\ctparcel.vcxproj", "{D138BB9A-E1FE-417C-BC94-09E4A914E7E0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generator", "..\generator\generator\generator.vcxproj", "{85BA67BC-DB83-4577-AF65-E7E33734AA50}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,14 +21,6 @@ Global
 		{D138BB9A-E1FE-417C-BC94-09E4A914E7E0}.Release|x64.Build.0 = Release|x64
 		{D138BB9A-E1FE-417C-BC94-09E4A914E7E0}.Release|x86.ActiveCfg = Release|Win32
 		{D138BB9A-E1FE-417C-BC94-09E4A914E7E0}.Release|x86.Build.0 = Release|Win32
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Debug|x64.ActiveCfg = Debug|x64
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Debug|x64.Build.0 = Debug|x64
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Debug|x86.ActiveCfg = Debug|Win32
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Debug|x86.Build.0 = Debug|Win32
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Release|x64.ActiveCfg = Release|x64
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Release|x64.Build.0 = Release|x64
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Release|x86.ActiveCfg = Release|Win32
-		{85BA67BC-DB83-4577-AF65-E7E33734AA50}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

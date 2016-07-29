@@ -233,7 +233,7 @@ namespace ctWin32Wizard
         {
             if(ifile < addedsec->nfiles)
             {
-                //先到第一个
+                //先找到第一个
                 fileblock* fb = (fileblock*)((DWORD)addedsec + sizeof( addedSector ));
                 //一直遍历到指定的位置
                 for(int i = 0; i < ifile; i++)

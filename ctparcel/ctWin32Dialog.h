@@ -21,7 +21,7 @@ namespace ctWin32Dialog
         COLOR_BALCK = 0	     		//ºÚ
     };
 
-#define CommandCallback	function<int CALLBACK( HWND, DWORD )>
+    #define CommandCallback	function<int CALLBACK( HWND, DWORD )>
     class ctDialog;
 
     struct ctDialogInfo
