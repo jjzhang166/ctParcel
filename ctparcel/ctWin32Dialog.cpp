@@ -173,7 +173,7 @@ namespace ctWin32Dialog
         RegisterClassExA(&wcex );
 
         // create main window
-        HWND hWnd = CreateWindow( szClass, TEXT( "ctDialog" ), WS_OVERLAPPEDWINDOW&~WS_MAXIMIZEBOX&~WS_THICKFRAME,
+        HWND hWnd = CreateWindow( szClass, TEXT( "ctDialog" ), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
             CW_USEDEFAULT, 0, xWidth, xHeight, nullptr, nullptr, appInstance, nullptr );
         //设置窗体位置居中
         MoveWindow( hWnd, (GetSystemMetrics( SM_CXSCREEN ) - xWidth) / 2,

@@ -83,7 +83,7 @@ namespace ctPEFile
         PIMAGE_SECTION_HEADER secheader;
         int seccount;
 
-        PEFile() : filebuf( NULL )
+        PEFile() : filebuf( nullptr )
         {}
         ~PEFile()
         {
@@ -94,7 +94,7 @@ namespace ctPEFile
         bool init( byte *infilebuf )
         {
             dosheader = (PIMAGE_DOS_HEADER)infilebuf;
-            if(dosheader->e_magic == 0x5A4D)
+            if(dosheader->e_magic == IMAGE_DOS_SIGNATURE)
             {
                 ntheader = (PIMAGE_NT_HEADERS)(infilebuf + (DWORD)(dosheader->e_lfanew));
                 secheader = (PIMAGE_SECTION_HEADER)(((DWORD)ntheader) + sizeof( IMAGE_NT_HEADERS ));
@@ -136,16 +136,6 @@ namespace ctWin32Wizard
     //
     // PARTCALLBACK(prc) 生成一个lambda 用来调用成员函数的回调函数
     #define PARTCALLBACK(proc) [=](HWND hDlg,DWORD windowId)->int{return proc(hDlg,windowId);}
-    // 在生成的最终exe的文件后面添加一个结构,这个结构包含了必须的UI图片/配置/压缩文件等
-    #define RELATIVEPATH_TMP	".tmp"
-    struct fileblock
-    {
-        char relativepath[150];			// 临时文件=".tmp" or 相对路径 : aa/bb/
-        char filename[50];				// 文件名   : a.dll   >> 那么这个文件的路径: setuppath/aa/bb/a.dll
-        DWORD filesize;					// 大小
-                                        //
-                                        // +sizeof(fileblock) 之后就是文件内容 byte* filebuf
-    };
     struct addedSector
     {
         DWORD verifycode;               // 0
@@ -157,6 +147,16 @@ namespace ctWin32Wizard
         int nfiles;						// 总文件数量
                                         //
                                         // +sizeof(addedSector) 之后就是每个文件块 fileblock
+    };
+    // 在生成的最终exe的文件后面添加一个结构,这个结构包含了必须的UI图片/配置/压缩文件等
+    #define RELATIVEPATH_TMP	".tmp"
+    struct fileblock
+    {
+        char relativepath[150];			// 临时文件=".tmp" or 相对路径 : aa/bb/
+        char filename[50];				// 文件名   : a.dll   >> 那么这个文件的路径: setuppath/aa/bb/a.dll
+        DWORD filesize;					// 大小
+                                        //
+                                        // +sizeof(fileblock) 之后就是文件内容 byte* filebuf
     };
 
     /*
@@ -221,7 +221,7 @@ namespace ctWin32Wizard
             GetModuleFileNameA( NULL, tmp, 260 );
             if(selfpe.loadfile( tmp ))
             {
-                //从最后一个区段得到之前文件的大小,超出的就是添加的数据了
+                //越过最后一个区段,就是添加数据的位置
                 PIMAGE_SECTION_HEADER lastsec = selfpe.secheader + selfpe.seccount - 1;
                 return (addedSector*)(selfpe.filebuf + lastsec->PointerToRawData + lastsec->SizeOfRawData);
             }
@@ -386,9 +386,9 @@ namespace ctWin32Wizard
         //
         // UI 
         //
-        void start( int w = 510, int h = 370 )
+        void start()
         {
-            ctd.createMainDialog( w, h );
+            ctd.createMainDialog( 510, 370 );
             ctd.setTitle( GETSETUPSTRING( 1 ) );
             page1( ctd.hMainDlg, 0 );
 
