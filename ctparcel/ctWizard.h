@@ -276,6 +276,7 @@ namespace ctWin32Wizard
                     }
                 }
 
+                // 界面上显示当前解压文件的名称
                 ctd.setText( "showpath", extractPath );
                 //Sleep( 100 );
                 //return;
@@ -292,7 +293,7 @@ namespace ctWin32Wizard
 
                 byte* filebuf = (byte*)((DWORD)fb + sizeof( fileblock ));
 
-                //存在压缩时,先解压
+                // 存在压缩时,先解压
                 if(compress == "zip")
                 {
                     //-unzip to a membuffer -
