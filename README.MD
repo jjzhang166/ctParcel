@@ -1,6 +1,4 @@
-###简便的打包安装工具
-
-##(仿NSIS界面)
+### 简便的打包安装工具 (仿NSIS界面)
 
 系列博文:  [点击前往](http://my.oschina.net/tasker/blog?catalog=3671451&temp=1470028794262)
 
