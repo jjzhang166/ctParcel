@@ -7,7 +7,7 @@
 
 namespace ctCommon
 {
-    //�����ļ�
+    //运行文件
     void Runexe( char* runpath, char* dir )
     {
         PROCESS_INFORMATION backpi;
@@ -18,17 +18,17 @@ namespace ctCommon
         CreateProcessA( 0, runpath, 0, 0, 0, 0, 0, dir, &si, &backpi );
         CloseHandle( backpi.hProcess );
     }
-    //�õ���ǰprogram·��
+    //得到当前program路径
     BOOL GetProgramPath( char *pszPath )
     {
         return SHGetSpecialFolderPathA( NULL, pszPath, CSIDL_PROGRAM_FILES, FALSE );
     }
-    //�õ���ǰ����·��
+    //得到当前桌面路径
     BOOL GetDesktopPath( char *pszPath )
     {
         return SHGetSpecialFolderPathA( NULL, pszPath, CSIDL_DESKTOP, FALSE );
     }
-    //���������ݷ�ʽ
+    //创建桌面快捷方式
     bool CreateDesktopShotCut( std::string shotcutName, std::string exeName, std::string strSourcePath )
     {
         if(FAILED( CoInitialize( NULL ) ))
@@ -37,7 +37,7 @@ namespace ctCommon
         char Path[MAX_PATH];
         std::string strDestDir;
 
-        //���������ݷ�ʽ������
+        //设置桌面快捷方式的名字
         GetDesktopPath( Path );
         strDestDir = Path;
         strDestDir += "\\";
@@ -47,14 +47,14 @@ namespace ctCommon
         IShellLink* psl;
         if(SUCCEEDED( CoCreateInstance( CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl ) ))
         {
-            //���ÿ�ݷ�ʽ����ʼλ�� 
-            //����Ŀ��λ��ΪC:\windows\a.txt ��ʼλ�þ�Ӧ������ΪC:\windows����ᵼ�²���Ԥ�ϵĴ���
-            //������ļ��еĿ�ݷ�ʽ��ʼλ�ú�Ŀ��λ�ÿ�������Ϊһ��
+            //设置快捷方式的起始位置 
+            //比如目标位置为C:\windows\a.txt 起始位置就应该设置为C:\windows否则会导致不可预料的错误
+            //如果是文件夹的快捷方式起始位置和目标位置可以设置为一样
             psl->SetWorkingDirectory( strSourcePath.c_str() );
-            //���ÿ�ݷ�ʽ��Ŀ��λ�� 
+            //设置快捷方式的目标位置 
             psl->SetPath( (strSourcePath + "\\" + exeName).c_str() );
 
-            //�����ݷ�ʽ������ 
+            //保存快捷方式到桌面 
             IPersistFile* ppf;
             psl->QueryInterface( IID_IPersistFile, (void**)&ppf );
             WCHAR wsz[MAX_PATH];
@@ -134,78 +134,78 @@ namespace ctPEFile
 namespace ctWin32Wizard
 {
     //
-    // PARTCALLBACK(prc) ����һ��lambda �������ó�Ա�����Ļص�����
+    // PARTCALLBACK(prc) 生成一个lambda 用来调用成员函数的回调函数
     #define PARTCALLBACK(proc) [=](HWND hDlg,DWORD windowId)->int{return proc(hDlg,windowId);}
     struct addedSector
     {
         DWORD verifycode;               // 0
 
-        char compressType[10];			// ѹ����ʽ
-        char programName[20];			// ��װ���ĳ�����
-        char autorun[150];              // �Զ����г�������·��
+        char compressType[10];			// 压缩方式
+        char programName[20];			// 安装包的程序名
+        char autorun[150];              // 自动运行程序的相对路径
 
-        int nfiles;						// ���ļ�����
+        int nfiles;						// 总文件数量
                                         //
-                                        // +sizeof(addedSector) ֮�����ÿ���ļ��� fileblock
+                                        // +sizeof(addedSector) 之后就是每个文件块 fileblock
     };
-    // �����ɵ�����exe���ļ���������һ���ṹ,����ṹ�����˱����UIͼƬ/����/ѹ���ļ���
+    // 在生成的最终exe的文件后面添加一个结构,这个结构包含了必须的UI图片/配置/压缩文件等
     #define RELATIVEPATH_TMP	".tmp"
     struct fileblock
     {
-        char relativepath[150];			// ��ʱ�ļ�=".tmp" or ���·�� : aa/bb/
-        char filename[50];				// �ļ���   : a.dll   >> ��ô����ļ���·��: setuppath/aa/bb/a.dll
-        DWORD filesize;					// ��С
+        char relativepath[150];			// 临时文件=".tmp" or 相对路径 : aa/bb/
+        char filename[50];				// 文件名   : a.dll   >> 那么这个文件的路径: setuppath/aa/bb/a.dll
+        DWORD filesize;					// 大小
                                         //
-                                        // +sizeof(fileblock) ֮������ļ����� byte* filebuf
+                                        // +sizeof(fileblock) 之后就是文件内容 byte* filebuf
     };
 
     /*
-    -----------(�涨)-----------
+    -----------(规定)-----------
 
-    Ĭ��ʹ�õ�1���ļ�(txt-file)��Ϊ��װʱ���ַ�����ȡ:
+    默认使用第1个文件(txt-file)作为安装时的字符串读取:
     **************************************
     [follow this:]  gb2312
 
-    ��װ - %s
-    < ��һ��(B)
-    ��һ��(N) >
-    ȡ��
-    ����
-    ��װ(I)
-    ���(F)
-    ��ӭʹ�� %s ��װ��
-    ���ڽ���װ %s��
-    �������ڼ���֮ǰ�ر�����Ӧ�ó���
-    ���"��һ��"����,���ߵ��"ȡ��"�˳���װ��
-    ѡ��Ŀ��λ��
-    %s Ҫ��װ�����
-    ��װ���򽫰� %s ��װ�������ļ��С�
-    ��Ҫ����,����"��һ��"�� �����Ҫ��һ���ļ���,����"���"��
-    ���(R)...
-    ׼����װ
-    ��װ����׼������ĵ����ϰ�װ��
-    ���"��װ"����,��������޸���������"��һ��"��
-    ���ڰ�װ
-    ���ڰ�װ %s, ���Ժ�...
-    ������ȡ�ļ�...
-    %s ��װ�����
-    ��װ�����������ĵ����а�װ�� %s �� ��Ӧ�ó������ͨ��ѡ��װ�Ŀ�ݷ�ʽ���С�
-    ����'���'�˳���װ����
-    ���� %s
-    �˳���װ
-    ��װδ���!����������˳�,�����޷���ɣ�
-    Ҫ�˳���װ��
+    安装 - %s
+    < 上一步(B)
+    下一步(N) >
+    取消
+    继续
+    安装(I)
+    完成(F)
+    欢迎使用 %s 安装向导
+    现在将安装 %s。
+    建议你在继续之前关闭其他应用程序。
+    点击"下一步"继续,或者点击"取消"退出安装。
+    选择目标位置
+    %s 要安装到哪里？
+    安装程序将把 %s 安装到以下文件夹。
+    若要继续,请点击"下一步"。 如果你要换一个文件夹,请点击"浏览"。
+    浏览(R)...
+    准备安装
+    安装程序准备在你的电脑上安装。
+    点击"安装"继续,如果你想修改设置请点击"上一步"。
+    正在安装
+    正在安装 %s, 请稍后...
+    正在提取文件...
+    %s 安装向导完成
+    安装程序已在您的电脑中安装了 %s 。 此应用程序可以通过选择安装的快捷方式运行。
+    单击'完成'退出安装程序。
+    运行 %s
+    退出安装
+    安装未完成!如果你现在退出,程序将无法完成！
+    要退出安装吗？
 
     **************************************
 
-    Ĭ��ʹ�õ�2,3,4���ļ���Ϊ3����װʱ��ͼƬ:
+    默认使用第2,3,4个文件作为3个安装时的图片:
     2: WizardImage.bmp
     3: SmallWizardImage.bmp
     4: folders.bmp
     */
 
     //
-    // Wizard��
+    // Wizard类
     //
     class ctWizard
     {
@@ -213,29 +213,29 @@ namespace ctWin32Wizard
         ctPEFile::PEFile selfpe;
 
         //////////////////////////////////////////////////////////////////////////
-        // setup����
-        // ��ȡ�����ӵ��ڴ�����λ��
+        // setup功能
+        // 获取被添加的内存所在位置
         addedSector* getAddedSector()
         {
             char tmp[260];
             GetModuleFileNameA( NULL, tmp, 260 );
             if(selfpe.loadfile( tmp ))
             {
-                //Խ�����һ������,�����������ݵ�λ��
+                //越过最后一个区段,就是添加数据的位置
                 PIMAGE_SECTION_HEADER lastsec = selfpe.secheader + selfpe.seccount - 1;
                 return (addedSector*)(selfpe.filebuf + lastsec->PointerToRawData + lastsec->SizeOfRawData);
             }
             return nullptr;
         }
 
-        //��ȡָ�����ļ���λ��
+        //获取指定的文件块位置
         fileblock* getFileBlock( int ifile )
         {
             if(ifile < addedsec->nfiles)
             {
-                //���ҵ���һ��
+                //先找到第一个
                 fileblock* fb = (fileblock*)((DWORD)addedsec + sizeof( addedSector ));
-                //һֱ������ָ����λ��
+                //一直遍历到指定的位置
                 for(int i = 0; i < ifile; i++)
                     fb = (fileblock*)((DWORD)fb + fb->filesize + sizeof( fileblock ));
                 return fb;
@@ -244,9 +244,9 @@ namespace ctWin32Wizard
         }
 
         //
-        //�ͷ��ļ���ָ��λ��
+        //释放文件到指定位置
         //
-        //���������ļ���������->������crash
+        //如果传入的文件数量错误->函数会crash
         //
         void extractFile( int ifile )
         {
@@ -256,7 +256,7 @@ namespace ctWin32Wizard
                 char extractPath[260] = {0};
                 if(strcmp( fb->relativepath, ".tmp" ) == 0)
                 {
-                    //��ʱ�ļ�,ֱ���ͷŵ���ʱĿ¼
+                    //临时文件,直接释放到临时目录
                     GetTempPathA( 260, extractPath );
                     strcat( extractPath, fb->filename );
                 }
@@ -276,7 +276,7 @@ namespace ctWin32Wizard
                     }
                 }
 
-                // ��������ʾ��ǰ��ѹ�ļ�������
+                // 界面上显示当前解压文件的名称
                 ctd.setText( "showpath", extractPath );
                 //Sleep( 100 );
                 //return;
@@ -293,7 +293,7 @@ namespace ctWin32Wizard
 
                 byte* filebuf = (byte*)((DWORD)fb + sizeof( fileblock ));
 
-                // ����ѹ��ʱ,�Ƚ�ѹ
+                // 存在压缩时,先解压
                 if(compress == "zip")
                 {
                     //-unzip to a membuffer -
@@ -305,19 +305,19 @@ namespace ctWin32Wizard
                         FindZipItem( hz, fb->filename, true, &i, &ze );
                         char *ibuf = new char[ze.unc_size];
                         UnzipItem( hz, i, ibuf, ze.unc_size );
-                        writetoexfile( ibuf, ze.unc_size );         //д��
+                        writetoexfile( ibuf, ze.unc_size );         //写入
                         delete[] ibuf;
                         CloseZip( hz );
                     }
                 }
                 else
                 {
-                    writetoexfile( filebuf, fb->filesize );         //д��
+                    writetoexfile( filebuf, fb->filesize );         //写入
                 }
             }
         }
 
-        //��temp path����ļ�·��
+        //在temp path里的文件路径
         std::string getTempFile( char* fileName )
         {
             char tmp[260];
@@ -330,8 +330,8 @@ namespace ctWin32Wizard
         #define  TMP_folders			getTempFile("folders.bmp").c_str()
         #define  TMP_str				getTempFile("str.txt").c_str()
 
-        //����ʱ�ļ�����ȥ��ȡstr.txtָ��������
-        //��programName���и�ʽ��
+        //到临时文件夹里去获取str.txt指定的文字
+        //和programName进行格式化
         std::string getString( int snum )
         {
             char tmp[200] = {0}, tmpall[300] = {0};
@@ -359,9 +359,9 @@ namespace ctWin32Wizard
         {
             addedsec = getAddedSector();
 
-            //�жϰ�װ����Ч��
+            //判断安装包有效性
             //if( addedsec->verifycode != 0 ||  addedsec->nfiles < 4) {
-            //  MessageBoxA( 0, "��װ������!", 0, MB_ICONERROR );
+            //  MessageBoxA( 0, "安装包错误!", 0, MB_ICONERROR );
             //  return;
             //}
 
@@ -376,7 +376,7 @@ namespace ctWin32Wizard
                 setuppath += "\\";
                 setuppath += addedsec->programName;
 
-                //�ͷ���ʱ�ļ�[setup temp file]����ʱ�ļ��� 
+                //释放临时文件[setup temp file]到临时文件夹 
                 for(int i = 0; i < 4; i++)
                     extractFile( i );
 
@@ -396,7 +396,7 @@ namespace ctWin32Wizard
             HICON hIcon = LoadIconA( ctd.appInstance, MAKEINTRESOURCEA( IDI_ICON1 ) );
             SendMessageA( ctd.hMainDlg, WM_SETICON, TRUE, (LPARAM)hIcon );
 
-            //UI�߳���������
+            //UI线程这里阻塞
             ctd.showMainDialog();
         }
         int CALLBACK page1( HWND hDlg, DWORD windowId )
@@ -437,7 +437,7 @@ namespace ctWin32Wizard
         }
         int CALLBACK page3( HWND hDlg, DWORD windowId )
         {
-            setuppath = ctd.getEditText( "path" );		//�ȶ�ȡ֮ǰpage2�е�path
+            setuppath = ctd.getEditText( "path" );		//先读取之前page2中的path
             ctd.clearDlg();
 
             char tmp[200];
@@ -451,7 +451,7 @@ namespace ctWin32Wizard
             ctd.createText( GETSETUPSTRING( 18 ), 40, 35, 200, 15 );
             ctd.createText( GETSETUPSTRING( 19 ), 40, 75, 400, 15 );
             ctd.createEdit( 40, 100, 400, 170, "lastshow" );
-            PostMessageW( ctd.getWnd( "lastshow" ), EM_SETREADONLY, 1, 0 );		//����Ϊֻ��
+            PostMessageW( ctd.getWnd( "lastshow" ), EM_SETREADONLY, 1, 0 );		//设置为只读
             ctd.setText( "lastshow", tmp );
             ctd.createbutton( GETSETUPSTRING( 2 ), 200, 300, PARTCALLBACK( page2 ) );
             ctd.createbutton( GETSETUPSTRING( 6 ), 300, 300, PARTCALLBACK( page4 ) );
@@ -470,13 +470,13 @@ namespace ctWin32Wizard
             ctd.createText( GETSETUPSTRING( 21 ), 40, 35, 300, 15 );
             ctd.createText( GETSETUPSTRING( 22 ), 40, 75, 400, 15 );
             ctd.createbutton( GETSETUPSTRING( 4 ), 400, 300, PARTCALLBACK( cancel ) );
-            //����һ��text �Թ���ʾ��װ���ļ�����Ϣ
+            //创建一个text 以供显示安装的文件名信息
             ctd.createText( "", 40, 95, 450, 15, 0, "showpath" );
-            //����һ�����ذ�ť,����ͨ������page5
+            //创建一个隐藏按钮,可以通过他到page5
             ctd.createbutton( GETSETUPSTRING( 5 ), 300, 300, PARTCALLBACK( page5 ), 85, 22, "overbutton" );
             ShowWindow( ctd.getWnd( "overbutton" ), 0 );
 
-            //����������ý���Ϊ�ļ�����,ÿ���ͷ�һ���ļ� +1����
+            //这里可以设置进度为文件数量,每次释放一个文件 +1进度
             ctd.createProgress( 40, 120, "extract", filescount );
             std::thread t1( &ctWizard::installing, this );
             t1.detach();
@@ -503,7 +503,7 @@ namespace ctWin32Wizard
         //
         int CALLBACK end( HWND hDlg, DWORD windowId )
         {
-            //��װ��Ϻ� �����ݷ�ʽ/�Զ����еĳ���
+            //安装完毕后 桌面快捷方式/自动运行的程序
             if(addedsec->autorun[0])
             {
                 //create desktop shortcut
@@ -522,7 +522,7 @@ namespace ctWin32Wizard
         {
             CreateDirectoryA(setuppath.c_str(),NULL);
 
-            // from 4 to max  [0-3 is tmpfile]
+            // from 4 to max  [0-3 = temp files]
             for(int i = 4; i < filescount; i++)
             {
                 extractFile( i );
