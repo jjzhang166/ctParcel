@@ -1,8 +1,9 @@
 ### 简便的打包安装工具 (仿NSIS界面)  by Vs2015
 
- _此项目仅为模板EXE_  [点击前往生成器](http://git.oschina.net/codetimer/ctParcel-Generator)
+ 此项目仅为模板EXE_  [点击前往生成器](http://git.oschina.net/codetimer/ctParcel-Generator)
 
 ### 系列博文:  [点击前往](http://my.oschina.net/tasker/blog?catalog=3671451&temp=1470028794262)
+
 
 
 .......................................................................................................
