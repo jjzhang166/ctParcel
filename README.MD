@@ -1,6 +1,6 @@
 简便的打包安装工具 (仿NSIS界面)  
 =================================================  
-编译环境： Visual Stdio 2015
+编译环境： ```Visual Stdio 2015```
 
 > 此项目仅为模板EXE_  [点击前往生成器](http://git.oschina.net/codetimer/ctParcel-Generator)
 
