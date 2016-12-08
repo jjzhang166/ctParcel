@@ -5,7 +5,7 @@
 
 > 此项目仅为模板EXE_  [点击前往生成器](http://git.oschina.net/codetimer/ctParcel-Generator)
 
-> 系列介绍博文:  [点击前往](http://my.oschina.net/tasker/blog?catalog=3671451&temp=1470028794262)
+> 系列介绍博文:  [点击前往](https://my.oschina.net/tasker/blog/724596)
 
 
 
